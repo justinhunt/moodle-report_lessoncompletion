@@ -31,7 +31,7 @@ require_once($CFG->dirroot.'/report/lessoncompletion/forms.php');
 $id = required_param('id',PARAM_INT); 
 //anything other than searchuser will show the repor
 $action = optional_param('action','searchuser',PARAM_TEXT);
-// the format to "show". Currently only html. Later csc and excel 
+// the format to "show". Currently only html. Later pdf and excel 
 $format = optional_param('format',RLCR_FORMAT_HTML,PARAM_INT);
 //user id to show report for
 $userid =optional_param('userid',0,PARAM_INT);
@@ -113,20 +113,20 @@ foreach ($modinfo->sections as $sectionnum=>$section) {
 			unset($items);
 			$items=array();
             $prevsectionnum = $sectionnum;
+        }
 		//if its a lesson item, store it ready for display or export
-        }else{
-			if($cm->modname==RLCR_ACTIVITY_LESSON && $cm->visible){
-				$haslesson=true;
-				$item = new stdClass();
-				$item->description=$cm->name;
-				if($completions && array_key_exists($cm->id,$completions)){
-					$item->date=date("Y-m-d",$completions[$cm->id]);
-				}else{
-					$item->date= get_string('incomplete','report_lessoncompletion');
-				}
-				$items[]=$item;
-			}//end of if 'lesson'
-		}//end of if 'end of section'
+		if($cm->modname==RLCR_ACTIVITY_LESSON && $cm->visible){
+			$haslesson=true;
+			$item = new stdClass();
+			$item->description=$cm->name;
+			if($completions && array_key_exists($cm->id,$completions)){
+				$item->date=date("d.m.Y",$completions[$cm->id]);
+			}else{
+				$item->date= get_string('incomplete','report_lessoncompletion');
+			}
+			$items[]=$item;
+		}//end of if 'a visible lesson'
+			
 	}//end of sections  inner loop
 }//end of sections outer loop
 
@@ -142,10 +142,17 @@ switch($format){
 			echo $renderer->render_section_html($thesection[0], $head, $thesection[1]);
 		}
 		echo $renderer->render_continuebuttons_html($course);
+		
+		//uncomment next line to display export buttons. Implement the logic in renderer.php
+		//echo $renderer->render_exportbuttons_html($course,$selecteduser);
+		
 		echo $renderer->footer();
 		break;
 		
-	case RLCR_FORMAT_CSV:
+	case RLCR_FORMAT_PDF:
 	case RLCR_FORMAT_EXCEL:
 		//add renderer calls here
+		echo $renderer->header();
+		echo "replace all this with logic to form pdf/excel";
+		echo $renderer->footer();
 }

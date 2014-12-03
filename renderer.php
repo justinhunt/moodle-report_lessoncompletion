@@ -41,7 +41,20 @@ class report_lessoncompletion_renderer extends plugin_renderer_base {
 
 	public function render_empty_section_html($sectiontitle) {
 		global $CFG;
-		return $this->output->heading($sectiontitle, 4);
+		return "";
+		//return $this->output->heading($sectiontitle, 4);
+	}
+	
+	public function render_exportbuttons_html($course,$selecteduser){
+		$pdf = new single_button(
+			new moodle_url('/report/lessoncompletion/index.php',array('id'=>$course->id, 'userid'=>$selecteduser->id, 'format'=>RLCR_FORMAT_PDF, 'action'=>'doexport')),
+			get_string('exportpdf','report_lessoncompletion'), 'get');
+		
+		$excel = new single_button(
+			new moodle_url('/report/lessoncompletion/index.php',array('id'=>$course->id, 'userid'=>$selecteduser->id, 'format'=>RLCR_FORMAT_EXCEL, 'action'=>'doexport')), 
+			get_string('exportexcel','report_lessoncompletion'), 'get');
+
+		return html_writer::div( $this->render($pdf) . $this->render($excel),'report_lessoncompletion_listbuttons');
 	}
 	
 	public function render_continuebuttons_html($course){
@@ -53,7 +66,7 @@ class report_lessoncompletion_renderer extends plugin_renderer_base {
 			new moodle_url('/report/lessoncompletion/index.php',array('id'=>$course->id)), 
 			get_string('selectanother','report_lessoncompletion'), 'get');
 			
-		return $this->render($backtocourse) . $this->render($selectanother);
+		return html_writer::div($this->render($backtocourse) . $this->render($selectanother),'report_lessoncompletion_listbuttons');
 	}
 
 	public function render_section_html($sectiontitle, $head, $rows) {
@@ -61,9 +74,19 @@ class report_lessoncompletion_renderer extends plugin_renderer_base {
 		if(empty($rows)){
 			return $this->render_empty_section_html($sectiontitle);
 		}
+		
+		//set up our attributes
+		$tableattributes = array('class'=>'generaltable report_lessoncompletion_table');
+		$headrow_attributes = array('class'=>'report_lessoncompletion_headrow');
+		$desccell_attributes = array('class'=>'report_lessoncompletion_desccell');
+		$datecell_attributes = array('class'=>'report_lessoncompletion_datecell');
+		
 		$htmltable = new html_table();
+		$htmltable->attributes = $tableattributes;
+		
 		
 		$htr = new html_table_row();
+		$htr->attributes = $headrow_attributes;
 		foreach($head as $headcell){
 			$htr->cells[]=new html_table_cell($headcell);
 		}
@@ -71,8 +94,15 @@ class report_lessoncompletion_renderer extends plugin_renderer_base {
 		
 		foreach($rows as $row){
 			$htr = new html_table_row();
-			$htr->cells[]=new html_table_cell($row->description);
-			$htr->cells[]=new html_table_cell($row->date);
+			//set up descrption cell
+			$desccell = new html_table_cell($row->description);
+			$desccell->attributes =$desccell_attributes ;
+			//set up date cell
+			$datecell = new html_table_cell($row->date);
+			$datecell->attributes =$datecell_attributes ;
+			//add to row
+			$htr->cells[]=$desccell;
+			$htr->cells[]=$datecell;
 			$htmltable->data[]=$htr;
 		}
 		$html = $this->output->heading($sectiontitle, 4);

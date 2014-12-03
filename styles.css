@@ -1,8 +1,26 @@
-#page-report-lessoncompletion-index td.numviews {text-align:right;}
-#page-report-lessoncompletion-index tr.section {text-align: center;}
-#page-report-lessoncompletion-index td.lastaccess {font-size: 0.8em;}
 
+#page-report-lessoncompletion-index tr.section {text-align: center;}
 #page-report-lessoncompletion-user .section .content {margin-left: 30px;margin-right: 30px;}
 #page-report-lessoncompletion-user .section h2 {margin-top: 0;}
 #page-report-lessoncompletion-user .section {margin-left: 30px;margin-right: 30px;margin-bottom: 20px;}
 #page-report-lessoncompletion-user .section {border-width:1px;border-style:solid;padding:10px;}
+
+table.report_lessoncompletion_table td{
+	border: 1px solid black;
+}
+table.report_lessoncompletion_table th{
+	border: 1px solid black;
+}
+
+.report_lessoncompletion_desccell{
+	width: 70%;
+}
+
+.report_lessoncompletion_headrow{
+	font-weight: bold;
+}
+
+div.report_lessoncompletion_listbuttons {
+	display: flex;
+	float: right;
+}

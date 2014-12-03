@@ -43,4 +43,6 @@ $string['showreport'] = 'Select another student';
 $string['selectanother'] = 'Select another student';
 $string['backtocourse'] = 'Back to course home page';
 $string['reporttitle']='Lesson completions: {$a}';
+$string['exportpdf']='Export to PDF';
+$string['exportexcel']='Export to Excel';
 

@@ -32,7 +32,7 @@ require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/user/selector/lib.php');
 
 define('RLCR_FORMAT_HTML',0);
-define('RLCR_FORMAT_CSV',1);
+define('RLCR_FORMAT_PDF',1);
 define('RLCR_FORMAT_EXCEL',2);
 define('RLCR_ACTIVITY_LESSON','lesson');
 
@@ -59,8 +59,6 @@ class report_lessoncompletion_search_user_form extends moodleform {
 		$mform->addElement('hidden', 'action', 'dosearchuser');
         $mform->setType('action', PARAM_TEXT);
 		$mform->addElement('submit', 'searchbutton',  get_string('dosearch_label', 'report_lessoncompletion'));
-	//	$this->add_action_buttons(true,get_string('dosearch_label', 'report_lessoncompletion'));
-
     }
 }
 /*
@@ -132,9 +130,10 @@ class report_lessoncompletion_user_selector extends user_selector_base {
     protected function get_options() {
         global $CFG;
         $options = parent::get_options();
-        $options['file'] = '/report/lessoncompletion/locallib.php'; //need to be set, otherwise
-                                                        // the /user/selector/search.php
-                                                        //will fail to find this user_selector class
+        //need to be set, otherwise
+        // the /user/selector/search.php
+        //will fail to find this user_selector class
+		$options['file'] = '/report/lessoncompletion/forms.php'; 
         return $options;
     }
 }
