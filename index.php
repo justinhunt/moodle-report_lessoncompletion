@@ -97,9 +97,12 @@ $sectiontitle ="";
 $items=array();
 
 foreach ($modinfo->sections as $sectionnum=>$section) {
+
 	if($prevsectionnum ==-1){$prevsectionnum = $sectionnum;}
     foreach ($section as $cmid) {
-        $cm = $modinfo->cms[$cmid];
+		//get our course module
+		$cm = $modinfo->cms[$cmid];
+		
 		//if its a new section. set the current section's data to allsections
 		//then setup the next section		
         if ($prevsectionnum != $sectionnum) {
@@ -126,9 +129,18 @@ foreach ($modinfo->sections as $sectionnum=>$section) {
 			}
 			$items[]=$item;
 		}//end of if 'a visible lesson'
-			
 	}//end of sections  inner loop
 }//end of sections outer loop
+
+//The last section may not get processed. So we check for that and process it here
+//I am sure we could handle this looping a bit better. :(
+if(!empty($items)){
+	if($haslesson){
+		$allsections[]=array($sectiontitle,$items);//$renderer->render_section($sectiontitle, $head, $items);
+	}else{
+		$allsections[]=array($sectiontitle,array());//$renderer->render_empty_section($sectiontitle);
+	}
+}
 
 
 //Prepare and output the all sections data we collected above
@@ -136,7 +148,7 @@ $head=array(get_string('description','report_lessoncompletion'),get_string('comp
 switch($format){
 	case RLCR_FORMAT_HTML:
 		echo $renderer->header();
-		echo $renderer->render_reporttitle_html($course,fullname($selecteduser));
+		echo $renderer->render_reporttitle_html($course,fullname($selecteduser));;
 		foreach($allsections as $thesection){
 			//$thesection[0]=section title / $thesection[1]=array of lesson titles and compl. dates
 			echo $renderer->render_section_html($thesection[0], $head, $thesection[1]);
