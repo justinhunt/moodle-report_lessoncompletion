@@ -36,6 +36,7 @@ $string['page-report-lessoncompletion-x'] = 'Any lesson completion report';
 $string['page-report-lessoncompletion-index'] = 'Course Lesson Completion report';
 $string['page-report-lessoncompletion-user'] = 'User course lessoncompletion report';
 $string['pluginname'] = 'Lesson Completion report';
+$string['availableusers']='Available Users';
 $string['dosearch_label'] = 'Show Report';
 $string['dosearch'] = 'Search';
 $string['username'] = 'User Name';

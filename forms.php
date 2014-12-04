@@ -116,7 +116,7 @@ class report_lessoncompletion_user_selector extends user_selector_base {
 
 
     
-        $groupname = get_string('potentialmembers', 'local_family');
+        $groupname = get_string('availableusers', 'report_lessoncompletion');
       
 
         return array($groupname => $availableusers);
