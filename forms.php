@@ -142,12 +142,30 @@ class report_lessoncompletion_user_selector extends user_selector_base {
         $fields      = 'SELECT ' . $this->required_fields_sql('u');
         $countfields = 'SELECT COUNT(1)';
 
+		
+		//this is the original SQL which gets all users
+		/*
             $sql = " FROM {user} u
                  WHERE $wherecondition
                        AND u.deleted = 0 AND NOT (u.auth='webservice') ";
+		*/
  
-       
+		//this sql gets only the users in the current course
+		//its only partly good, because a user could be suspended or have time limited enrolment
+		//but we need to also search by name, so its probably better than using get_enrolled_users()
+         $sql = " FROM {user} u
+				INNER JOIN
+				{user_enrolments} ue
+				ON
+				ue.userid=u.id
+				INNER JOIN
+				{enrol} e
+				ON
+				e.id=ue.enrolid
+                 WHERE $wherecondition
+                       AND e.courseid=" . $this->usecourse->id . " AND u.deleted = 0 AND NOT (u.auth='webservice') ";
 
+	   
         list($sort, $sortparams) = users_order_by_sql('u', $search, $this->accesscontext);
         $order = ' ORDER BY ' . $sort;
 
