@@ -70,20 +70,70 @@ class report_lessoncompletion_user_selector extends user_selector_base {
    /** @var boolean Whether the conrol should allow selection of many users, or just one. */
     protected $multiselect = false;
     /** @var int The height this control should have, in rows. */
-    protected $rows = 5;
+    protected $rows = 15;
+	
+	protected $usecourse=false;
 
     public function __construct($name, $options) {
+		global $COURSE;
+		
+		//if we arrive via ajax, the course context is lost
+		//we have to add it in get_options() (.. see below)
+		//and check for it here
+		if(!array_key_exists('usecourse',$options)){
+			$this->usecourse=$COURSE;
+			$options['usecourse'] = $COURSE;
+		}else{
+			$this->usecourse=$options['usecourse'];
+		}
+		
         parent::__construct($name, $options);
     }
     
-      /**
-     * Find allowed or not allowed users of a service (depend of $this->displayallowedusers)
+	 /**
+     * Find users and return them
      * @global object $DB
      * @param <type> $search
      * @return array
      */
-    public function find_users($search) {
-        global $DB, $COURSE;
+	public function find_users($search) {
+		//get coruse context
+		$context = context_course::instance($this->usecourse->id);
+		
+		//check if we have the capability to use the report (we arrive via ajax sometimes)
+		if(!has_capability('report/lessoncompletion:view', $context)){
+			return $this->fetch_empty_result();
+		}
+		
+		//check if we are in group mode. If no, show all. If yes, check our group permissions
+		$groupmode = groups_get_course_groupmode($this->usecourse);
+		if($groupmode==NOGROUPS){
+			return $this->find_all_users($search);
+		}else{
+			if(has_capability('moodle/site:accessallgroups', $context)){
+				return $this->find_all_users($search);
+			}else{
+				return $this->find_mygroup_users($search);
+			}
+		}
+	}
+	
+	 /**
+     * Return a no users set (ie empty)
+     * @return array
+     */
+	private function fetch_empty_result(){
+		return array();
+	}
+	
+      /**
+     * Find all users and return them
+     * @global object $DB
+     * @param <type> $search
+     * @return array
+     */
+    private function find_all_users($search) {
+        global $DB;
         //by default wherecondition retrieves all users except the deleted, not
         //confirmed and guest
         list($wherecondition, $params) = $this->search_sql($search, 'u');
@@ -109,18 +159,72 @@ class report_lessoncompletion_user_selector extends user_selector_base {
         }
 
         $availableusers = $DB->get_records_sql($fields . $sql . $order, array_merge($params, $sortparams));
-
+		
+		//if we have no users, return an empty result
         if (empty($availableusers)) {
-            return array();
+            return $this->fetch_empty_result();
         }
 
-
-    
+		//return good data
         $groupname = get_string('availableusers', 'report_lessoncompletion');
-      
-
         return array($groupname => $availableusers);
     }
+	
+	 /**
+     * Find users in the same group and return them
+     * @global object $DB $USER
+     * @param <type> $search
+     * @return array
+     */
+    private function find_mygroup_users($search) {
+        global $DB, $USER;
+		
+		$ret=array();
+        //by default wherecondition retrieves all users except the deleted, not
+        //confirmed and guest
+        list($wherecondition, $params) = $this->search_sql($search, 'u');
+
+
+        $fields      = 'SELECT ' . $this->required_fields_sql('u');
+        $countfields = 'SELECT COUNT(1)';
+		$sql_template = " FROM {user} u
+				INNER JOIN {groups_members} gu
+				ON u.id = gu.userid
+                 WHERE $wherecondition
+					   AND gu.groupid in (@@GROUPIDS@@) 
+                       AND u.deleted = 0 AND NOT (u.auth='webservice') "; 
+		list($sort, $sortparams) = users_order_by_sql('u', $search, $this->accesscontext);
+		$order = ' ORDER BY ' . $sort;
+
+		//get group info
+		$groups = groups_get_user_groups($this->usecourse->id, $USER->id);
+		$groupids=array();
+		foreach($groups[0] as $groupid){
+			$groupids[]=$groupid;
+		}
+		
+		//if we are not in any groups, exit
+		if(empty($groupids)){return $this->fetch_empty_result();}
+		
+		//prepare SQL to get user count
+		$gidstring = implode(',',$groupids);
+		$sql = str_replace('@@GROUPIDS@@',$gidstring, $sql_template);
+	
+		 if (!$this->is_validating()) {
+				$potentialmemberscount = $DB->count_records_sql($countfields . $sql, $params);
+				if ($potentialmemberscount > $this->maxusersperpage) {
+					return $this->too_many_results($search, $potentialmemberscount);
+				}
+			}
+		
+		//Get a result set per group
+		foreach($groupids as $groupid){
+			$sql = str_replace('@@GROUPIDS@@',$groupid, $sql_template);
+			$gusers = $DB->get_records_sql($fields . $sql . $order, array_merge($params, $sortparams));
+			$ret[groups_get_group_name($groupid)]=$gusers;
+		}
+		return $ret;
+	}
     
      /**
      * This options are automatically used by the AJAX search
@@ -128,8 +232,10 @@ class report_lessoncompletion_user_selector extends user_selector_base {
      * @return object options pass to the constructor when AJAX search call a new selector
      */
     protected function get_options() {
-        global $CFG;
+        global $CFG,$COURSE;
         $options = parent::get_options();
+		$options['usecourse']=$COURSE;
+
         //need to be set, otherwise
         // the /user/selector/search.php
         //will fail to find this user_selector class
